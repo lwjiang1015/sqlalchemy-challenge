@@ -105,4 +105,9 @@ Use the command line to add your files to the repository.
 
 Include appropriate commit messages in the files. 
 
-Rererences:
+
+## References/acknowledgement
+This assignment has been completed primarily with reference to the course materials for Module 10. The help from the teaching team, the tutor, and from the Xpert Learning Assistant at Datacampspot are acknowledged. 
+
+
+
