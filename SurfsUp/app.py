@@ -56,60 +56,70 @@ def home():
         f"/api/v1.0/precipitation<br/>"
         f"/api/v1.0/stations<br/>"
         f"/api/v1.0/tobs<br/>"
-        f"/api/v1.0/start<br/>"
-        f"/api/v1.0/starttoend"
+        f"/api/v1.0/date/2016-08-23<br/>"
+        f"/api/v1.0/date/2016-08-23/2016-12-31"
     )
 
 @app.route("/api/v1.0/precipitation")
 def precipitation():
-    
-    """Return json with the date as the key and the value as the precipitation"""
-    """Only return json the jsonified precipitation data for the last year in the database"""
 
-    precipitation_one_year = session.query(Measurement.date,Measurement.prcp)\
+    prcp = session.query(Measurement.date,Measurement.prcp)\
     .filter(Measurement.date>=(dt.date(2017,8,23)-dt.timedelta(days=365))).all()
     
-    def Convert(precipitation_one_year):
-        prcp_dict = {'date': 'prcp'}
+    json_dict = {date: value for date, value in prcp}
     
-    return jsonify(prcp_dict)
+    session.close()
+    
+    return jsonify(json_dict)
 
 # Return a JSON list of stations from the dataset.
 @app.route("/api/v1.0/stations")
 def stations():
     station_list = session.query(Station.station, Station.name).all()
-    return jsonify(station_list)
+    
+    session.close() 
+    
+    return jsonify(list(np.ravel(station_list)))
 
 # Query the dates and temperature observations of the most-active station for the previous year of data.
 # Return a JSON list of temperature observations for the previous year.
 @app.route("/api/v1.0/tobs")
 def tobs():
-    temperature_most_active_12m = session.query(Measurement.date, Measurement.tobs).\
-                filter(Measurement.station == "USC00519281").\
-                filter(Measurement.date >= (dt.date(2017,8,23)-dt.timedelta(days=365))).all()
-    return jsonify(temperature_most_active_12m)
+    temperature_most_active_12m = session.query(Measurement.date, Measurement.tobs)\
+                .filter(Measurement.station == "USC00519281")\
+                .filter(Measurement.date >= (dt.date(2017,8,23)-dt.timedelta(days=365))).all()
+    
+    session.close()
+    
+    return jsonify(list(np.ravel(temperature_most_active_12m)))
 
 # Return a JSON list of the minimum temperature, the average temperature, and the max temperature for a given start or start-end range.
 #For a specified start, calculate TMIN, TAVG, and TMAX for all the dates greater than or equal to the start date.
 
-@app.route("/api/v1.0/<start>")
-def start(date):
-    temp_post_startdate = session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs))\
-    .filter(Measurement.date >= (dt.date(2017,8,23)-dt.timedelta(days=365))).all()
+@app.route("/api/v1.0/date/2016-08-23")
+def start_date(date="2016-08-23"):
+    print(f"Accept a given start date...")
     
-    return jsonify(temp_post_startdate)
+    temp_post_startdate = session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs))\
+    .filter(Measurement.date >= date).all()
+    
+    session.close()
+    
+    return jsonify(list(np.ravel(temp_post_startdate)))
 
 #For a specified start date and end date, calculate TMIN, TAVG, and TMAX for the dates from the start date to the end date, inclusive.
 
-@app.route("/api/v1.0/<start>/<end>")
-def startend(start,end):
-    start_date = dt.date(2017,8,23)-dt.timedelta(days=365)
-    end_date = dt.date(2016,12,31)
-    temp_start_end = session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs,func.max(Measurement.tobs)))\
-    .filter(Measurement.date >= start_date).filter(Measurement.date <= end_date).all()
+@app.route("/api/v1.0/date/2016-08-23/2016-12-31")
+def startend(start="2016-08-23",end="2016-12-31"):
     
-    return jsonify(temp_start_end)
-
+    print(f"Accept a given start-end range...")
+    
+    temp_start_end = session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs))\
+    .filter(Measurement.date >= start).filter(Measurement.date <= end).all()
+    
+    session.close()
+    
+    return jsonify(list(np.ravel(temp_start_end)))
 
 if __name__ == '__main__':
     app.run(debug=True)
