@@ -56,8 +56,8 @@ def home():
         f"/api/v1.0/precipitation<br/>"
         f"/api/v1.0/stations<br/>"
         f"/api/v1.0/tobs<br/>"
-        f"/api/v1.0/date/2016-08-23<br/>"
-        f"/api/v1.0/date/2016-08-23/2016-12-31"
+        f"/api/v1.0/date<br/>"
+        f"/api/v1.0/start/end"
     )
 
 @app.route("/api/v1.0/precipitation")
@@ -96,9 +96,8 @@ def tobs():
 # Return a JSON list of the minimum temperature, the average temperature, and the max temperature for a given start or start-end range.
 #For a specified start, calculate TMIN, TAVG, and TMAX for all the dates greater than or equal to the start date.
 
-@app.route("/api/v1.0/date/2016-08-23")
-def start_date(date="2016-08-23"):
-    print(f"Accept a given start date...")
+@app.route("/api/v1.0/date")
+def start_date(date=input('please enter a date')):
     
     temp_post_startdate = session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs))\
     .filter(Measurement.date >= date).all()
@@ -109,10 +108,8 @@ def start_date(date="2016-08-23"):
 
 #For a specified start date and end date, calculate TMIN, TAVG, and TMAX for the dates from the start date to the end date, inclusive.
 
-@app.route("/api/v1.0/date/2016-08-23/2016-12-31")
-def startend(start="2016-08-23",end="2016-12-31"):
-    
-    print(f"Accept a given start-end range...")
+@app.route("/api/v1.0/start/end")
+def startend(start=input('please enter the start date'),end=input('please enter the end date')):
     
     temp_start_end = session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs))\
     .filter(Measurement.date >= start).filter(Measurement.date <= end).all()
