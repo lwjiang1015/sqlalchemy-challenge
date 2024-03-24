@@ -7,7 +7,7 @@ from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import Session
 from sqlalchemy import create_engine, func
 import datetime as dt
-from flask import Flask, jsonify
+from flask import Flask, request, jsonify
 
 #################################################
 # Database Setup
@@ -57,7 +57,7 @@ def home():
         f"/api/v1.0/stations<br/>"
         f"/api/v1.0/tobs<br/>"
         f"/api/v1.0/date<br/>"
-        f"/api/v1.0/start/end"
+        f"/api/v1.0/dates"
     )
 
 @app.route("/api/v1.0/precipitation")
@@ -96,8 +96,10 @@ def tobs():
 # Return a JSON list of the minimum temperature, the average temperature, and the max temperature for a given start or start-end range.
 #For a specified start, calculate TMIN, TAVG, and TMAX for all the dates greater than or equal to the start date.
 
-@app.route("/api/v1.0/date")
-def start_date(date=input('please enter a date')):
+@app.route("/api/v1.0/date", methods=['POST'])
+def start_date():
+    
+    date = request.form.get('date')
     
     temp_post_startdate = session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs))\
     .filter(Measurement.date >= date).all()
@@ -105,14 +107,18 @@ def start_date(date=input('please enter a date')):
     session.close()
     
     return jsonify(list(np.ravel(temp_post_startdate)))
-
+    
 #For a specified start date and end date, calculate TMIN, TAVG, and TMAX for the dates from the start date to the end date, inclusive.
 
-@app.route("/api/v1.0/start/end")
-def startend(start=input('please enter the start date'),end=input('please enter the end date')):
+@app.route("/api/v1.0/dates", methods=['POST'])
+def date_range():
+    
+    start_date = request.form.get('start_date')
+    end_date = request.form.get('end_date')
+    
     
     temp_start_end = session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs))\
-    .filter(Measurement.date >= start).filter(Measurement.date <= end).all()
+    .filter(Measurement.date >= start_date).filter(Measurement.date <= end_date).all()
     
     session.close()
     
@@ -120,3 +126,4 @@ def startend(start=input('please enter the start date'),end=input('please enter 
 
 if __name__ == '__main__':
     app.run(debug=True)
+    
